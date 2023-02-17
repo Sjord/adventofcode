@@ -1,13 +1,34 @@
+use std::collections::HashSet;
 use std::str::FromStr;
 use std::fs;
 use std::env;
+use core::iter::Chain;
+use itertools::Itertools;
 
 fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
     let rucksacks = contents.lines().map(|l| l.parse::<Rucksack>().unwrap());
-    let sum : u32 = rucksacks.map(|r| r.double_item().unwrap().priority() as u32).sum();
+    let chunks = rucksacks.chunks(3);
+    let groups = chunks.into_iter().map(
+        |r| Group { rucksacks: r.collect() }
+    );
+    let sum : u32 = groups.map(|g| g.triple_item().unwrap().priority() as u32).sum();
+    // let sum : u32 = rucksacks.map(|r| r.double_item().unwrap().priority() as u32).sum();
     println!("{}", sum);
+}
+
+struct Group {
+    rucksacks: Vec<Rucksack>
+}
+
+impl Group {
+    fn triple_item(&self) -> Option<&Item> {
+        let sets = self.rucksacks.iter().map(|r| r.all_items().into_iter().collect::<HashSet<&Item>>());
+        let intersect = sets.reduce(|a, b| a.intersection(&b).map(|i| *i).collect::<HashSet<&Item>>())?;
+        let item = intersect.iter().next()?;
+        Some(item)
+    }
 }
 
 #[derive(Debug)]
@@ -24,6 +45,10 @@ impl Rucksack {
         }
         None
     }
+
+    fn all_items(&self) -> Vec<&Item> {
+        self.compartment[0].items.iter().chain(self.compartment[1].items.iter()).collect()
+    }
 }
 
 #[derive(Debug)]
@@ -31,7 +56,7 @@ struct Compartment {
     items: Vec<Item>
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 struct Item {
     c: u8
 }
