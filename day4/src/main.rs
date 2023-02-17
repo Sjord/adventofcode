@@ -30,6 +30,9 @@ trait Overlaps {
 
 impl Overlaps for RangeInclusive<u8> {
     fn overlaps(&self, other: &RangeInclusive<u8>) -> bool {
-        self.start() <= other.start() && self.end() >= other.end()
+        self.contains(other.start())
+        || self.contains(other.end())
+        || other.contains(self.start())
+        || other.contains(self.end())
     }
 }
