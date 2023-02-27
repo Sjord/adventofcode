@@ -49,9 +49,9 @@ struct Stacks(Vec<Stack>);
 impl Stacks {
     fn execute(&mut self, instructions: Vec<Instruction>) {
         for i in instructions {
-            for c in 0..i.count {
-                let elem = self.0[i.from - 1].0.pop_front().unwrap();
-                self.0[i.to - 1].0.push_front(elem)
+            let mut popped : Vec<char> = (0..i.count).map(|j| self.0[i.from - 1].0.pop_front().unwrap()).collect();
+            for elem in popped.iter().rev() {
+                self.0[i.to - 1].0.push_front(*elem);
             }
         }
     }
