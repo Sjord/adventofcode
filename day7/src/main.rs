@@ -4,8 +4,20 @@ fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
     let lines = parse_dir(&contents);
-    let files = parse_lines(lines);
-    println!("{:?}", files);
+    let (dirs, files) = parse_lines(lines);
+
+    let mut sizes = Vec::new();
+    for d in dirs {
+        let size = get_size(&d, &files);
+        println!("{:?}: {}", d, size);
+        sizes.push((d, size));
+    }
+    let total_size: usize = sizes.iter().filter(|(d, s)| *s < 100000).map(|(d, s)| s).sum();
+    println!("{}", total_size);
+}
+
+fn get_size(dir: &PathBuf, files: &Vec<PFile>) -> usize {
+    files.iter().filter(|f| f.path.starts_with(&dir)).map(|f| f.size).sum()
 }
 
 fn parse_dir(contents: &str) -> Vec<Line> {
@@ -31,8 +43,9 @@ fn parse_dir(contents: &str) -> Vec<Line> {
     }).collect()
 }
 
-fn parse_lines(lines: Vec<Line>) -> Vec<PFile> {
-    let mut result = Vec::new();
+fn parse_lines(lines: Vec<Line>) -> (Vec<PathBuf>, Vec<PFile>) {
+    let mut files = Vec::new();
+    let mut dirs = Vec::new();
     let mut current_path = PathBuf::new();
     for l in lines {
         match l {
@@ -44,16 +57,18 @@ fn parse_lines(lines: Vec<Line>) -> Vec<PFile> {
             }
             Line::Command(Command::Ls) => (),
             Line::Inode(Inode::File(f)) => {
-                result.push(PFile {
+                files.push(PFile {
                     size: f.size,
                     path: current_path.join(f.name)
                 })
             },
-            Line::Inode(Inode::Dir(d)) => (),
+            Line::Inode(Inode::Dir(d)) => {
+                dirs.push(current_path.join(d.name));
+            },
         }
         // println!("{:?}", currentPath);
     }
-    result
+    (dirs, files)
 }
 
 #[derive(Debug)]
