@@ -12,8 +12,12 @@ fn main() {
         println!("{:?}: {}", d, size);
         sizes.push((d, size));
     }
-    let total_size: usize = sizes.iter().filter(|(d, s)| *s < 100000).map(|(d, s)| s).sum();
-    println!("{}", total_size);
+    let occupied: usize = get_size(&PathBuf::from("/"), &files);
+    let needed = occupied - (70000000 - 30000000);
+    println!("occupied: {}", occupied);
+    println!("space needed: {}", needed);
+    let to_delete = sizes.iter().filter(|(d, s)| *s >= needed).min_by_key(|(d, s)| s);
+    println!("{:?}", to_delete);
 }
 
 fn get_size(dir: &PathBuf, files: &Vec<PFile>) -> usize {
