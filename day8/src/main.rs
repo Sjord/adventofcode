@@ -13,45 +13,50 @@ fn main() {
     let mut visibleCount = 0;
     for y in 0..grid.rows() {
         for x in 0..grid.cols() {
-            if is_visible(&grid, x, y) {
-                visibleCount += 1;
+            let score = scenic_score(&grid, x, y);
+            println!("visible trees x{} y{} score{}", x, y, score);
+            if score > visibleCount {
+                visibleCount = score;
             }
         }
     }
-    println!("visible trees: {}", visibleCount);
+    println!("max score: {}", visibleCount);
 }
 
-fn is_visible(grid: &Grid<u8>, x: usize, y: usize) -> bool {
+fn scenic_score(grid: &Grid<u8>, x: usize, y: usize) -> u32 {
     let height = *grid.get(y, x).unwrap();
 
-    let mut leftVisible = true;
-    for left in 0..x {
+    let mut leftVisible = 0;
+    for left in (0..x).rev() {
+        leftVisible += 1;
         if *grid.get(y, left).unwrap() >= height {
-            leftVisible = false;
+            break;
         }
     }
-    println!("x {} y {} leftvis {}", x, y, leftVisible);
 
-    let mut rightVisible = true;
+    let mut rightVisible = 0;
     for right in (x + 1)..grid.cols() {
+        rightVisible += 1;
         if *grid.get(y, right).unwrap() >= height {
-            rightVisible = false;
+            break;
         }
     }
 
-    let mut topVisible = true;
-    for top in 0..y {
+    let mut topVisible = 0;
+    for top in (0..y).rev() {
+        topVisible += 1;
         if *grid.get(top, x).unwrap() >= height {
-            topVisible = false;
+            break;
         }
     }
 
-    let mut bottomVisible = true;
+    let mut bottomVisible = 0;
     for bottom in (y + 1)..grid.rows() {
+        bottomVisible += 1;
         if *grid.get(bottom, x).unwrap() >= height {
-            bottomVisible = false;
+            break;
         }
     }
 
-    leftVisible || rightVisible || topVisible || bottomVisible
+    leftVisible * rightVisible * topVisible * bottomVisible
 }
