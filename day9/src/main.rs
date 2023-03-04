@@ -22,7 +22,7 @@ fn main() {
 
         for i in 0..count {
             r.move_head(&dir);
-            tail_visited.insert(r.tail.clone());
+            tail_visited.insert(r.parts[9].clone());
         }
         println!("{:?}", r);
     }
@@ -37,8 +37,7 @@ struct Coord {
 
 #[derive(Debug)]
 struct Rope {
-    head: Coord,
-    tail: Coord
+    parts: [Coord; 10]
 }
 
 #[derive(Debug)]
@@ -52,35 +51,48 @@ enum Direction {
 impl Rope {
     fn new() -> Self {
         Rope {
-            head: Coord { x: 0, y: 0 },
-            tail: Coord { x: 0, y: 0 },
+            parts: [Coord { x: 0, y: 0 }; 10] 
         }
     }
 
     fn move_head(&mut self, dir: &Direction) {
         match dir {
-            Direction::Up => self.head.y -= 1,
-            Direction::Down => self.head.y += 1,
-            Direction::Left => self.head.x -= 1,
-            Direction::Right => self.head.x += 1,
+            Direction::Up => self.parts[0].y -= 1,
+            Direction::Down => self.parts[0].y += 1,
+            Direction::Left => self.parts[0].x -= 1,
+            Direction::Right => self.parts[0].x += 1,
         }
-        if self.head.distance(&self.tail) > 1 {
-            let xdiff = self.head.x - self.tail.x;
-            let ydiff = self.head.y - self.tail.y;
+        for i in 1..10 {
+            self.move_part(i)
+        }
 
-            if self.head.x == self.tail.x {
-                self.tail.y += ydiff / 2;
-            } else if self.head.y == self.tail.y {
-                self.tail.x += xdiff / 2;
+    }
+    
+    fn move_part(&mut self, i: usize) {
+        let head = self.parts[i - 1];
+        let mut tail = self.parts[i];
+
+        if head.distance(&tail) > 1 {
+            let xdiff = head.x - tail.x;
+            let ydiff = head.y - tail.y;
+
+            if head.x == tail.x {
+                tail.y += ydiff / 2;
+            } else if head.y == tail.y {
+                tail.x += xdiff / 2;
+            } else if (i32::abs(xdiff) > 1) && (i32::abs(ydiff) > 1) {
+                tail.y += ydiff / 2;
+                tail.x += xdiff / 2;
             } else if (i32::abs(xdiff) > 1) {
-                self.tail.x += xdiff / 2;
-                self.tail.y += ydiff;
+                tail.x += xdiff / 2;
+                tail.y += ydiff;
             } else if (i32::abs(ydiff) > 1) {
-                self.tail.x += xdiff;
-                self.tail.y += ydiff / 2;
+                tail.x += xdiff;
+                tail.y += ydiff / 2;
             } else {
                 panic!();
             }
+            self.parts[i] = tail;
         }
     }
 }
@@ -90,7 +102,3 @@ impl Coord {
         max(i32::abs(other.x - self.x), i32::abs(other.y - self.y))
     }
 }
-/*
-  H
-T
-  */
