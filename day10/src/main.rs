@@ -61,9 +61,25 @@ impl Cpu {
     fn signal_strength(&self) -> i32 {
         self.cycle * self.x
     }
+
+    fn draw_pixel(&self) {
+        let crtx = self.cycle % 40;
+        if crtx == self.x - 1 || crtx == self.x || crtx == self.x + 1 {
+            print!("#");
+        } else {
+            print!(".");
+        }
+    }
     
     fn step_cycle(&mut self) {
+        self.draw_pixel();
+
         self.cycle += 1;
+
+        if self.cycle % 40 == 0 {
+            println!();
+        }
+
         if (self.cycle - 20) % 40 == 0 {
             self.signal_sum += self.signal_strength();
         }
