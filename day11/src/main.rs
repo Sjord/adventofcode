@@ -24,6 +24,9 @@ fn main() {
     }
     
     println!("{:?}", monkeys);
+
+    monkeys.sort_by_key(|m| -m.inspections);
+    println!("Monkey business: {}", monkeys[0].inspections * monkeys[1].inspections);
 }
 
 
@@ -34,7 +37,8 @@ pub struct Monkey {
     operation: Operation,
     test: i32,
     trueMonkey: i32,
-    falseMonkey: i32
+    falseMonkey: i32,
+    inspections: i32,
 }
 
 #[derive(Debug)]
@@ -86,6 +90,7 @@ impl Monkey {
                 self.falseMonkey
             };
             result.push(ThrownItem { destination, item });
+            self.inspections += 1;
         };
         self.items.clear();
         result

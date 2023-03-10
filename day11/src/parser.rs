@@ -27,7 +27,8 @@ fn monkey(input: &str) -> IResult<&str, Monkey> {
         operation,
         test,
         trueMonkey,
-        falseMonkey
+        falseMonkey,
+        inspections: 0
     }))
 }
 
