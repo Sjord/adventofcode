@@ -10,7 +10,9 @@ fn main() {
     let mut monkeys = monkeys(&contents).unwrap();
     println!("{:?}", monkeys);
 
-    for round in 0..20 {
+    let modulo : i64 = monkeys.iter().map(|m| m.test).product();
+
+    for round in 0..10000 {
         println!("Round {}", round);
             for i in 0..monkeys.len() {
             println!("  Monkey {}", i);
@@ -18,7 +20,7 @@ fn main() {
             let throws = monkey.inspect_and_throw();
             for throw in throws {
                 println!("    Throws {} to {}", throw.item, throw.destination);
-                monkeys[throw.destination as usize].items.push(throw.item);
+                monkeys[throw.destination as usize].items.push(throw.item % modulo);
             }
         }
     }
@@ -32,13 +34,13 @@ fn main() {
 
 #[derive(Debug)]
 pub struct Monkey {
-    id: i32,
-    items: Vec<i32>,
+    id: i64,
+    items: Vec<i64>,
     operation: Operation,
-    test: i32,
-    trueMonkey: i32,
-    falseMonkey: i32,
-    inspections: i32,
+    test: i64,
+    trueMonkey: i64,
+    falseMonkey: i64,
+    inspections: i64,
 }
 
 #[derive(Debug)]
@@ -55,7 +57,7 @@ enum Operator {
 }
 
 impl Operation {
-    fn evaluate(&self, old: i32) -> i32 {
+    fn evaluate(&self, old: i64) -> i64 {
         match self.operator {
             Operator::Add => self.left.value(old) + self.right.value(old),
             Operator::Multiply => self.left.value(old) * self.right.value(old),
@@ -66,11 +68,11 @@ impl Operation {
 #[derive(Debug)]
 enum Term {
     Old,
-    Const(i32)
+    Const(i64)
 }
 
 impl Term {
-    fn value(&self, old: i32) -> i32 {
+    fn value(&self, old: i64) -> i64 {
         match self {
             Term::Old => old,
             Term::Const(i) => *i
@@ -83,7 +85,8 @@ impl Monkey {
         let mut result = Vec::with_capacity(self.items.len());
         for item in self.items.iter() {
             let item = self.operation.evaluate(*item);
-            let item = item / 3;
+            // let item = item / 3;
+            let item = item;
             let destination = if item % self.test == 0 {
                 self.trueMonkey
             } else {
@@ -98,6 +101,6 @@ impl Monkey {
 }
 
 struct ThrownItem {
-    destination: i32,
-    item: i32
+    destination: i64,
+    item: i64
 }

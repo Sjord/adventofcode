@@ -14,12 +14,12 @@ pub fn monkeys(input: &str) -> Result<Vec<Monkey>, nom::error::Error<&str>> {
 }
 
 fn monkey(input: &str) -> IResult<&str, Monkey> {
-    let (i, (_, id, _)) = tuple((tag("Monkey "), cc::i32, tag(":\n")))(input)?;
-    let (i, (_, items, _)) = tuple((tag("  Starting items: "), separated_list0(tag(", "), cc::i32), tag("\n")))(i)?;
+    let (i, (_, id, _)) = tuple((tag("Monkey "), cc::i64, tag(":\n")))(input)?;
+    let (i, (_, items, _)) = tuple((tag("  Starting items: "), separated_list0(tag(", "), cc::i64), tag("\n")))(i)?;
     let (i, (_, operation, _)) = tuple((tag("  Operation: new = "), operation, tag("\n")))(i)?;
-    let (i, (_, test, _)) = tuple((tag("  Test: divisible by "), cc::i32, tag("\n")))(i)?;
-    let (i, (_, trueMonkey, _)) = tuple((tag("    If true: throw to monkey "), cc::i32, tag("\n")))(i)?;
-    let (i, (_, falseMonkey)) = tuple((tag("    If false: throw to monkey "), cc::i32))(i)?;
+    let (i, (_, test, _)) = tuple((tag("  Test: divisible by "), cc::i64, tag("\n")))(i)?;
+    let (i, (_, trueMonkey, _)) = tuple((tag("    If true: throw to monkey "), cc::i64, tag("\n")))(i)?;
+    let (i, (_, falseMonkey)) = tuple((tag("    If false: throw to monkey "), cc::i64))(i)?;
 
     Ok((i, Monkey { 
         id: id,
@@ -40,7 +40,7 @@ fn operation(input: &str) -> IResult<&str, Operation> {
 fn term(input: &str) -> IResult<&str, Term> {
     alt((
         map(tag("old"), |_| Term::Old),
-        map(cc::i32, |i| Term::Const(i))
+        map(cc::i64, |i| Term::Const(i))
     ))(input)
 }
 
