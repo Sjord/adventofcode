@@ -18,10 +18,9 @@ fn main() {
     *grid.get_mut(end.0, end.1).unwrap() = b'z';
 
     let graph = to_graph(&grid);
-    let paths = dijkstra(&graph, start, Some(end), |_| 1);
-    let path = paths.get(&end);
-    // println!("{:?}", Dot::new(&graph));
-    dbg!(&path);
+    let paths = dijkstra(&graph, end, None, |_| 1);
+    let min_path = paths.iter().filter(|(c, _)| grid.get(c.0, c.1) == Some(&b'a')).min_by_key(|(_, p)| *p);
+    dbg!(min_path);
 }
 
 fn search(grid: &Grid<u8>, needle: u8) -> Option<(usize, usize)> {
@@ -49,7 +48,7 @@ fn to_graph(grid: &Grid<u8>) -> DiGraphMap<(usize, usize), i8> {
                     let dest = (dest_y, dest_x);
                     let dest_height = grid.get(dest_y, dest_x);
                     if let Some(dest_height) = dest_height {
-                        let uphil : i8 = *dest_height as i8 - *height as i8;
+                        let uphil : i8 = *height as i8 - *dest_height as i8;
                         if uphil <= 1 {
                             // println!("{:?} -> {:?} {}", coord, dest, uphil);
                             graph.add_edge(coord, dest, uphil);
