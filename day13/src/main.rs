@@ -5,13 +5,17 @@ use serde_json::Result;
 fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
-    let parts = contents.split("\n\n");
-    let pairs = parts.map(|part| {
-        let a: Vec<Value> = part.lines().map(|l| serde_json::from_str(l).unwrap()).collect();
-        (a[0].clone(), a[1].clone())
-    });
-    let sum : usize = pairs.enumerate().filter(|(i, p)| p.0 < p.1).map(|(i, p)| i + 1).sum();
-    dbg!(sum);
+    let mut packets : Vec<Value> = contents.lines().filter(|l| !l.is_empty()).map(|l| {
+        serde_json::from_str(l).unwrap()
+    }).collect();
+    let marker2 : Value = serde_json::from_str("[[2]]").unwrap();
+    let marker6 : Value = serde_json::from_str("[[6]]").unwrap();
+    packets.push(marker2.clone());
+    packets.push(marker6.clone());
+    packets.sort();
+    let pos2 = 1 + packets.iter().position(|p| *p == marker2).unwrap();
+    let pos6 = 1 + packets.iter().position(|p| *p == marker6).unwrap();
+    println!("decoder key: {}", pos2 * pos6);
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
