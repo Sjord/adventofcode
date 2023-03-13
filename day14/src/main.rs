@@ -11,7 +11,38 @@ fn main() {
     for l in lines {
         grid.draw_solid(&l);
     }
+    
+    let mut sand_count = 0;
+    'all_sand: loop {
+        let mut sand_pos = Coord { x: 500, y: 0 };
+        'one_grain: loop {
+            let below = sand_pos.directly_under();
+            if grid.get(&below) == Fill::None {
+                sand_pos = below;
+            } else {
+                let left_below = below.directly_left();
+                if grid.get(&left_below) == Fill::None {
+                    sand_pos = left_below;
+                } else {
+                    let right_below = below.directly_right();
+                    if grid.get(&right_below) == Fill::None {
+                        sand_pos = right_below;
+                    } else {
+                        grid.put_sand(sand_pos);
+                        break 'one_grain;
+                    }
+                }
+            }
+            if sand_pos.y > 1000 {
+                // in abyss
+                break 'all_sand;
+            }
+        }
+        sand_count += 1;
+    }
+
     grid.print();
+    println!("{}", sand_count);
 }
 
 fn lines(input: &str) -> Vec<Line> {
@@ -36,6 +67,20 @@ struct Coord {
     y: i32
 }
 
+impl Coord {
+    fn directly_under(&self) -> Coord {
+        Coord { x: self.x, y: self.y + 1}
+    }
+
+    fn directly_left(&self)  -> Coord {
+        Coord { x: self.x - 1, y: self.y}
+    }
+
+    fn directly_right(&self)  -> Coord {
+        Coord { x: self.x + 1, y: self.y}
+    }
+}
+
 struct Line {
     from: Coord,
     to: Coord
@@ -58,7 +103,7 @@ struct SparseGrid {
     foo: HashMap<Coord, Fill>,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 enum Fill {
     None,
     Solid,
@@ -92,6 +137,10 @@ impl SparseGrid {
             x += dx.signum();
             y += dy.signum();
         }
+    }
+
+    fn put_sand(&mut self, coord: Coord) {
+        self.foo.insert(coord, Fill::Sand);
     }
 
     fn get(&self, coord: &Coord) -> Fill {
