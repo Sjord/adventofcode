@@ -11,10 +11,13 @@ fn main() {
     for l in lines {
         grid.draw_solid(&l);
     }
-    
+    grid.draw_floor();
+
     let mut sand_count = 0;
+    let origin = Coord { x: 500, y: 0 };
     'all_sand: loop {
-        let mut sand_pos = Coord { x: 500, y: 0 };
+        sand_count += 1;
+        let mut sand_pos = origin.clone();
         'one_grain: loop {
             let below = sand_pos.directly_under();
             if grid.get(&below) == Fill::None {
@@ -28,17 +31,16 @@ fn main() {
                     if grid.get(&right_below) == Fill::None {
                         sand_pos = right_below;
                     } else {
+                        if (sand_pos == origin) {
+                            grid.put_sand(sand_pos);
+                            break 'all_sand;
+                        }
                         grid.put_sand(sand_pos);
                         break 'one_grain;
                     }
                 }
             }
-            if sand_pos.y > 1000 {
-                // in abyss
-                break 'all_sand;
-            }
         }
-        sand_count += 1;
     }
 
     grid.print();
@@ -149,6 +151,12 @@ impl SparseGrid {
             None => Fill::None,
             Some(f) => *f
         }
+    }
+
+    fn draw_floor(&mut self) {
+        let max_y = self.foo.iter().map(|(c, _)| c.y).max().unwrap();
+        let floor_y = max_y + 2;
+        self.draw_solid(&Line { from: Coord { x: 500 - 2 * floor_y, y: floor_y }, to: Coord { x: 500 + 2 * floor_y, y: floor_y }});
     }
 
     fn print(&self) {
