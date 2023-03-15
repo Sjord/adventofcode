@@ -12,7 +12,6 @@ fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
     let sensors = sensors(&contents);
-    println!("{:?}", sensors);
 
     let min_x = sensors
         .iter()
@@ -25,17 +24,38 @@ fn main() {
         .max()
         .unwrap();
 
-    let y = 2000000;
-    let not_beacon = (min_x..=max_x)
-        .filter(|x| cannot_be_beacon(&sensors, Coord { x: *x, y }))
-        .count();
-    dbg!(not_beacon);
+    let limits = 4000000;
+
+    for y in 0..=limits {
+        let mut x = 0;
+        while x <= limits {
+            let coord = Coord {x, y};
+            let mut can_be_beacon = true;
+            
+            for r in sensors.iter() {
+                if r.beacon == coord {
+                    x += 1;
+                    can_be_beacon = false;
+                    break;
+                } else if r.sensor.distance(&coord) <= r.beacon_distance() {
+                    x = 1 + r.sensor.x + r.beacon_distance() as i32 - coord.y.abs_diff(r.sensor.y) as i32;
+                    can_be_beacon = false;
+                    break;
+                }
+            }
+
+            if (can_be_beacon) {
+                println!("x: {}, y: {}, freq: {}", x, y, x as u64 * 4000000 + y as u64);
+                return;
+            }
+        }
+    }
 }
 
 fn cannot_be_beacon(records: &Vec<Record>, coord: Coord) -> bool {
     for r in records {
         if r.beacon == coord {
-            return false;
+            return true;
         }
         if r.sensor.distance(&coord) <= r.beacon_distance() {
             return true;
