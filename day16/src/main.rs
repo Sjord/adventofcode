@@ -44,7 +44,7 @@ fn main() {
 
     let start = graph.nodes().find(|n| n.name == "AA").unwrap();
     let mut search = WalkState {
-        graph,
+        graph: &graph,
         position: start,
         minutes_left: 30,
         released_pressure: 0,
@@ -57,7 +57,7 @@ fn main() {
 
 #[derive(Clone)]
 struct WalkState<'a> {
-    graph: UnGraphMap<Valve<'a>, ()>,
+    graph: &'a UnGraphMap<Valve<'a>, ()>,
     position: Valve<'a>,
     minutes_left: i32,
     released_pressure: i32,
@@ -78,7 +78,7 @@ impl<'a> WalkState<'a> {
                 *n != self.position
                 && n.flow_rate > 0
                 && !self.open_valves.contains(n)
-                && self.distance(&self.position, n) < self.minutes_left);
+                && 1 + self.distance(&self.position, n) < self.minutes_left);
         candidates
             .map(|c| {
                 let mut state = self.clone();
