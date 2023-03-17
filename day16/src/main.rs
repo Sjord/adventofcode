@@ -4,14 +4,11 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::{self as cc, alpha1},
-    multi::{separated_list0, separated_list1},
-    sequence::{preceded, tuple},
-    IResult,
+    IResult, multi::separated_list1, sequence::tuple,
 };
 use petgraph::prelude::UnGraphMap;
 use petgraph::{
     algo::dijkstra,
-    dot::{Config, Dot},
 };
 
 fn main() {
