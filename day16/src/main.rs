@@ -41,11 +41,10 @@ fn main() {
 
     let start = graph.nodes().find(|n| n.name == "AA").unwrap();
     let mut search = WalkState {
-        graph: &graph,
         position: start,
         minutes_left: 30,
         released_pressure: 0,
-        open_valves: Vec::new(),
+        pending_valves: graph.nodes().filter(|n| n.flow_rate > 0).collect(),
         distance_map: &distance_map,
     };
     let optimal = search.search();
@@ -54,11 +53,10 @@ fn main() {
 
 #[derive(Clone)]
 struct WalkState<'a> {
-    graph: &'a UnGraphMap<Valve<'a>, ()>,
     position: Valve<'a>,
     minutes_left: i32,
     released_pressure: i32,
-    open_valves: Vec<Valve<'a>>,
+    pending_valves: Vec<Valve<'a>>,
     distance_map: &'a HashMap<(Valve<'a>, Valve<'a>), i32>,
 }
 
@@ -68,16 +66,15 @@ impl<'a> WalkState<'a> {
             return self.released_pressure;
         }
 
-        let candidates = self.graph.nodes().filter(|n| {
-            *n != self.position
+        let candidates = self.pending_valves.iter().filter(|n| {
+            *n != &self.position
                 && n.flow_rate > 0
-                && !self.open_valves.contains(n)
                 && 1 + self.distance(&self.position, n) < self.minutes_left
         });
         candidates
             .map(|c| {
                 let mut state = self.clone();
-                state.travel_and_turn(c);
+                state.travel_and_turn(*c);
                 state.search()
             })
             .max()
@@ -94,7 +91,7 @@ impl<'a> WalkState<'a> {
         self.minutes_left -= distance + 1;
         self.released_pressure += self.minutes_left * destination.flow_rate;
         self.position = destination;
-        self.open_valves.push(destination);
+        self.pending_valves.retain(|v| v != &destination);
     }
 }
 
