@@ -71,28 +71,20 @@ impl<'a> WalkState<'a> {
             return self.released_pressure;
         }
 
-        let candidates = self
-            .graph
-            .nodes()
-            .filter(|n| 
-                *n != self.position
+        let candidates = self.graph.nodes().filter(|n| {
+            *n != self.position
                 && n.flow_rate > 0
                 && !self.open_valves.contains(n)
-                && 1 + self.distance(&self.position, n) < self.minutes_left);
+                && 1 + self.distance(&self.position, n) < self.minutes_left
+        });
         candidates
             .map(|c| {
                 let mut state = self.clone();
-                state.walk_to(c);
-                state.turn_valve(c);
+                state.travel_and_turn(c);
                 state.search()
             })
             .max()
-            .or_else(|| {
-                while self.minutes_left > 0 {
-                    self.minute_passed();
-                }
-                Some(self.released_pressure)
-            })
+            .or(Some(self.released_pressure))
             .unwrap()
     }
 
@@ -100,24 +92,12 @@ impl<'a> WalkState<'a> {
         self.distance_map[&(*from, *dest)]
     }
 
-    fn walk_to(&mut self, destination: Valve<'a>) {
+    fn travel_and_turn(&mut self, destination: Valve<'a>) {
         let distance = self.distance(&self.position, &destination);
-        for step in 0..distance {
-            self.minute_passed();
-        }
+        self.minutes_left -= distance + 1;
+        self.released_pressure += self.minutes_left * destination.flow_rate;
         self.position = destination;
-    }
-
-    fn turn_valve(&mut self, valve: Valve<'a>) {
-        self.minute_passed();
-        self.open_valves.push(valve);
-    }
-
-    fn minute_passed(&mut self) {
-        self.minutes_left -= 1;
-        if self.minutes_left >= 0 {
-            self.released_pressure += self.open_valves.iter().map(|v| v.flow_rate).sum::<i32>();
-        }
+        self.open_valves.push(destination);
     }
 }
 
