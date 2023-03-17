@@ -40,15 +40,42 @@ fn main() {
     }
 
     let start = graph.nodes().find(|n| n.name == "AA").unwrap();
-    let mut search = WalkState {
-        position: start,
-        minutes_left: 30,
-        released_pressure: 0,
-        pending_valves: graph.nodes().filter(|n| n.flow_rate > 0).collect(),
-        distance_map: &distance_map,
-    };
-    let optimal = search.search();
+    let interesting_valves = graph.nodes().filter(|n| n.flow_rate > 0).collect();
+    let splits = possible_splits(interesting_valves);
+    let optimal = splits.into_iter().map(|(me_valves, el_valves)| {
+        let mut me_search = WalkState {
+            position: start,
+            minutes_left: 26,
+            released_pressure: 0,
+            pending_valves: me_valves,
+            distance_map: &distance_map,
+        };
+        let mut el_search = WalkState {
+            position: start,
+            minutes_left: 26,
+            released_pressure: 0,
+            pending_valves: el_valves,
+            distance_map: &distance_map,
+        };
+        me_search.search() + el_search.search()
+    }).max();
     dbg!(optimal);
+}
+
+fn possible_splits(items: Vec<Valve>) -> Vec<(Vec<Valve>, Vec<Valve>)> {
+    let count = (1 << items.len()) / 2;
+    (0..count).map(|i| {
+        let mut a = Vec::new();
+        let mut b = Vec::new();
+        for (j, item) in items.iter().enumerate() {
+            if (i & (1 << j)) != 0 {
+                a.push(*item);
+            } else {
+                b.push(*item);
+            }
+        }
+        (a, b)
+    }).collect()
 }
 
 #[derive(Clone)]
