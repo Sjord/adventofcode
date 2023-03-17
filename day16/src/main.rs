@@ -1,4 +1,4 @@
-use std::{env, fs};
+use std::{collections::HashMap, env, fs};
 
 use nom::{
     branch::alt,
@@ -8,8 +8,11 @@ use nom::{
     sequence::{preceded, tuple},
     IResult,
 };
-use petgraph::{dot::{Config, Dot}, algo::dijkstra};
 use petgraph::prelude::UnGraphMap;
+use petgraph::{
+    algo::dijkstra,
+    dot::{Config, Dot},
+};
 
 fn main() {
     let fname = env::args().nth(1).unwrap();
@@ -31,6 +34,14 @@ fn main() {
         }
     }
 
+    let mut distance_map = HashMap::<(Valve, Valve), i32>::new();
+    for start in graph.nodes() {
+        let distances = dijkstra(&graph, start, None, |_| 1);
+        for (dest, distance) in distances.into_iter() {
+            distance_map.insert((start, dest), distance);
+        }
+    }
+
     let start = graph.nodes().find(|n| n.name == "AA").unwrap();
     let mut search = WalkState {
         graph,
@@ -38,6 +49,7 @@ fn main() {
         minutes_left: 30,
         released_pressure: 0,
         open_valves: Vec::new(),
+        distance_map: &distance_map,
     };
     let optimal = search.search();
     dbg!(optimal);
@@ -50,6 +62,7 @@ struct WalkState<'a> {
     minutes_left: i32,
     released_pressure: i32,
     open_valves: Vec<Valve<'a>>,
+    distance_map: &'a HashMap<(Valve<'a>, Valve<'a>), i32>,
 }
 
 impl<'a> WalkState<'a> {
@@ -61,7 +74,11 @@ impl<'a> WalkState<'a> {
         let candidates = self
             .graph
             .nodes()
-            .filter(|n| *n != self.position && n.flow_rate > 0 && !self.open_valves.contains(n));
+            .filter(|n| 
+                *n != self.position
+                && n.flow_rate > 0
+                && !self.open_valves.contains(n)
+                && self.distance(&self.position, n) < self.minutes_left);
         candidates
             .map(|c| {
                 let mut state = self.clone();
@@ -75,12 +92,16 @@ impl<'a> WalkState<'a> {
                     self.minute_passed();
                 }
                 Some(self.released_pressure)
-            })      
+            })
             .unwrap()
     }
 
+    fn distance(&self, from: &Valve<'a>, dest: &Valve<'a>) -> i32 {
+        self.distance_map[&(*from, *dest)]
+    }
+
     fn walk_to(&mut self, destination: Valve<'a>) {
-        let distance = *dijkstra(&self.graph, self.position, Some(destination), |_| 1).get(&destination).unwrap();
+        let distance = self.distance(&self.position, &destination);
         for step in 0..distance {
             self.minute_passed();
         }
