@@ -1,0 +1,23 @@
+graph {
+    0 [ label = "Valve { name: \"AA\", flow_rate: 0 }" ]
+    1 [ label = "Valve { name: \"BB\", flow_rate: 13 }" ]
+    2 [ label = "Valve { name: \"CC\", flow_rate: 2 }" ]
+    3 [ label = "Valve { name: \"DD\", flow_rate: 20 }" ]
+    4 [ label = "Valve { name: \"EE\", flow_rate: 3 }" ]
+    5 [ label = "Valve { name: \"FF\", flow_rate: 0 }" ]
+    6 [ label = "Valve { name: \"GG\", flow_rate: 0 }" ]
+    7 [ label = "Valve { name: \"HH\", flow_rate: 22 }" ]
+    8 [ label = "Valve { name: \"II\", flow_rate: 0 }" ]
+    9 [ label = "Valve { name: \"JJ\", flow_rate: 21 }" ]
+    0 -- 3 [ label = "()" ]
+    0 -- 8 [ label = "()" ]
+    0 -- 1 [ label = "()" ]
+    1 -- 2 [ label = "()" ]
+    2 -- 3 [ label = "()" ]
+    3 -- 4 [ label = "()" ]
+    4 -- 5 [ label = "()" ]
+    5 -- 6 [ label = "()" ]
+    6 -- 7 [ label = "()" ]
+    8 -- 9 [ label = "()" ]
+}
+
