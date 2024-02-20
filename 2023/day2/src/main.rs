@@ -1,4 +1,4 @@
-use std::{env, fs};
+use std::{cmp::max, env, fs};
 use nom::{
     branch::alt, bytes::complete::{tag, take_while_m_n}, character::complete::multispace0, combinator::map_res, multi::{separated_list0, separated_list1}, sequence::tuple, IResult};
 use nom::character::complete::i32 as cc_i32;
@@ -10,13 +10,13 @@ fn main() {
     let lines = binding
         .lines();
 
-    let max = Set { red: 12, green: 13, blue: 14 };
     let mut total = 0;
     for line in lines {
+        let mut min = Set { red: 0, green: 0, blue: 0 };
         let (_, game) = Game::parse_line(line).unwrap();
-        if game.is_possible(&max) {
-            total += game.id;
-        }
+        game.update_minimum(&mut min);
+        dbg!(min.power());
+        total += min.power();
     }
     dbg!(total);
 }
@@ -31,6 +31,10 @@ struct Set {
 impl Set {
     fn is_possible(&self, other: &Self) -> bool {
         self.red <= other.red && self.green <= other.green && self.blue <= other.blue
+    }
+
+    fn power(&self) -> i32 {
+        self.green * self.blue * self.red
     }
 }
 
@@ -75,5 +79,13 @@ impl Game {
 
     fn is_possible(&self, max: &Set) -> bool {
         self.sets.iter().all(|s| s.is_possible(max))
+    }
+
+    fn update_minimum(&self, min: &mut Set) {
+        for s in self.sets.iter() {
+            min.red = max(min.red, s.red);
+            min.green = max(min.green, s.green);
+            min.blue = max(min.blue, s.blue);
+        }
     }
 }
