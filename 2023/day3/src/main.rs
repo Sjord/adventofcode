@@ -4,7 +4,7 @@ fn main() {
     let fname = env::args().nth(1).unwrap();
     let s = fs::read_to_string(fname).unwrap();
     let grid = CharGrid::from_string(&s);
-    let answer : i32 = grid.get_part_numbers().iter().sum();
+    let answer : i32 = grid.get_gear_ratio_sum();
     dbg!(answer);
 }
 
@@ -82,6 +82,41 @@ impl CharGrid {
         } else {
             self.chars[i]
         }
+    }
+
+    fn get_gear_ratio_sum(&self) -> i32 {
+        let mut ratio_sum = 0;
+        for (i, c) in self.chars.iter().enumerate() {
+            if let GridValue::Symbol(b'*') = c {
+                let x = i % self.line_len;
+                let y = i / self.line_len;
+
+                let left = if x == 0 { 0 } else { x - 1 };
+                let right = x + 1;
+                let top = if y == 0 { 0 } else { y - 1 };
+                let bottom = y + 1;
+
+                let mut numbers = Vec::new();
+                for ya in top..=bottom {
+                    let mut last_seen = -1;
+                    for xa in left..=right {
+                        let val = self.get(xa, ya);
+                        if let GridValue::Number(_, num) = val {
+                            if last_seen != num {
+                                last_seen = num;
+                                numbers.push(num);
+                            }
+                        }
+                    }
+                }
+                dbg!(&numbers);
+                if numbers.len() == 2 {
+                    let ratio : i32 = numbers.iter().product();
+                    ratio_sum += ratio;
+                }
+            }
+        }
+        ratio_sum
     }
 
     fn get_part_numbers(&self) -> Vec<i32> {
