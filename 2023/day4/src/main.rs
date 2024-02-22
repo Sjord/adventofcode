@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::{env, fs};
 
 use nom::bytes::complete::tag;
@@ -13,18 +13,21 @@ fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
     let cards = parse_cards(&contents).unwrap();
-    let mut total = 0;
-    for c in cards {
-        let win_count = c.winning_numbers().len();
-        let points = if win_count == 0 {
-            0
-        } else {
-            2_i32.pow(win_count as u32 - 1)
-        };
-        println!("card {} has {} points", c.id, points);
-        total += points;
+    let mut stack : VecDeque<&Card> = VecDeque::from_iter(cards.iter());
+
+    let mut seen_cards = 0;
+    while let Some(card) = stack.pop_front() {
+        let win_count = card.winning_numbers().len();
+        // println!("card {} win_count {}", card.id, win_count);
+        for i in 0..win_count {
+            let idx : usize = card.id as usize + i;
+            // println!("adding card {}", cards.get(idx).unwrap().id);
+            stack.push_back(cards.get(idx).unwrap())
+        }
+        seen_cards += 1;
+
     }
-    dbg!(total);
+    dbg!(seen_cards);
 }
 
 #[derive(Debug)]
