@@ -2,7 +2,7 @@ use std::{env, fs};
 use nom::bytes::complete::tag;
 use nom::multi::separated_list1;
 use nom::sequence::tuple;
-use nom::character::complete::{alpha1, i32 as cc_i32, newline, space1};
+use nom::character::complete::{alpha1, i64 as cc_i64, newline, space1};
 use nom::combinator::all_consuming;
 use nom::error::Error;
 use nom::Finish;
@@ -11,13 +11,38 @@ fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
     let almanac = from_str(&contents).unwrap();
-    dbg!(almanac);
+    let locations = almanac.locations();
+    let min = locations.iter().min();
+    dbg!(min);
 }
 
 #[derive(Debug)]
 struct Almanac {
-    seeds: Vec<i32>,
+    seeds: Vec<i64>,
     sections: Vec<Section>
+}
+
+impl Almanac {
+    fn get_section_from(&self, from: &str) -> &Section {
+        self.sections.iter().find(|s| s.from == from).unwrap()
+    }
+
+    fn find_location(&self, seed: i64) -> i64 {
+        let mut item = "seed";
+        let mut number = seed;
+        loop {
+            let section = self.get_section_from(item);
+            number = section.map_number(number);
+            item = &section.to;
+            if item == "location" {
+                return number;
+            }
+        }
+    }
+
+    fn locations(&self) -> Vec<i64> {
+        self.seeds.iter().map(|s| self.find_location(*s)).collect()
+    }
 }
 
 #[derive(Debug)]
@@ -27,11 +52,31 @@ struct Section {
     maps: Vec<Map>
 }
 
+impl Section {
+    fn map_number(&self, num: i64) -> i64 {
+        for map in self.maps.iter() {
+            if let Some(dst) = map.map_number(num) {
+                return dst;
+            }
+        }
+        num
+    }
+}
+
 #[derive(Debug)]
 struct Map {
-    dest: i32,
-    src: i32,
-    len: i32
+    dest: i64,
+    src: i64,
+    len: i64
+}
+
+impl Map {
+    fn map_number(&self, num: i64) -> Option<i64> {
+        if num >= self.src && num <= self.src + self.len {
+            return Some(num + self.dest - self.src);
+        }
+        None
+    }
 }
 
 fn from_str(s: &str) -> Result<Almanac, Error<&str>> {
@@ -39,10 +84,10 @@ fn from_str(s: &str) -> Result<Almanac, Error<&str>> {
         alpha1, tag("-to-"), alpha1, tag(" map:")
     ));
     let map = tuple((
-        cc_i32, space1, cc_i32, space1, cc_i32
+        cc_i64, space1, cc_i64, space1, cc_i64
     ));
     let mut parser = all_consuming(tuple((
-        tag("seeds:"), space1, separated_list1(space1, cc_i32),
+        tag("seeds:"), space1, separated_list1(space1, cc_i64),
         tag("\n\n"),
         separated_list1(tag("\n\n"), tuple((
             header, newline, separated_list1(newline, map)
