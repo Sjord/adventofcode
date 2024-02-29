@@ -40,8 +40,19 @@ impl Almanac {
         }
     }
 
+    fn seeds(&self) -> Vec<i64> {
+        let mut result = Vec::new();
+        for slice in self.seeds.chunks(2).into_iter() {
+            let start = slice[0];
+            let len = slice[1];
+            let range = start..(start + len);
+            result.extend(range);
+        }
+        result
+    }
+
     fn locations(&self) -> Vec<i64> {
-        self.seeds.iter().map(|s| self.find_location(*s)).collect()
+        self.seeds().iter().map(|s| self.find_location(*s)).collect()
     }
 }
 
