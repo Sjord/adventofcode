@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::iter::empty;
 use std::{env, fs};
 use nom::bytes::complete::tag;
 use nom::multi::separated_list1;
@@ -11,8 +13,7 @@ fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
     let almanac = from_str(&contents).unwrap();
-    let locations = almanac.locations();
-    let min = locations.iter().min();
+    let min = almanac.lowest_location();
     dbg!(min);
 }
 
@@ -40,19 +41,56 @@ impl Almanac {
         }
     }
 
-    fn seeds(&self) -> Vec<i64> {
-        let mut result = Vec::new();
+    fn find_seed(&self, location: i64) -> i64 {
+        let map : HashMap<_, _> = self.sections.iter().map(|s| (&s.to, s)).collect();
+
+        let mut item = "location";
+        let mut number = location;
+        loop {
+            let section = map[&item.to_owned()];
+            number = section.map_number_reverse(number);
+            item = &section.from;
+            if item == "seed" {
+                return number;
+            }
+        }
+    }
+
+    fn seeds(&self) -> Box<dyn Iterator<Item=i64>> {
+        let mut result : Box<dyn Iterator<Item=i64>> = Box::new(empty());
         for slice in self.seeds.chunks(2).into_iter() {
             let start = slice[0];
             let len = slice[1];
             let range = start..(start + len);
-            result.extend(range);
+            result = Box::new(result.chain(range));
         }
         result
     }
 
+    fn has_seed(&self, seed: i64) -> bool {
+        for slice in self.seeds.chunks(2).into_iter() {
+            let start = slice[0];
+            let len = slice[1];
+            if seed >= start && seed <= (start + len) {
+                return true;
+            }
+        }
+        false
+    }
+
     fn locations(&self) -> Vec<i64> {
-        self.seeds().iter().map(|s| self.find_location(*s)).collect()
+        self.seeds().map(|s| self.find_location(s)).collect()
+    }
+
+    fn lowest_location(&self) -> Option<i64> {
+        let possible_seeds = self.seeds();
+        for location in 0..20000000 {
+            let seed = self.find_seed(location);
+            if self.has_seed(seed) {
+                return Some(location);
+            }
+        }
+        None
     }
 }
 
@@ -72,6 +110,15 @@ impl Section {
         }
         num
     }
+
+    fn map_number_reverse(&self, num: i64) -> i64 {
+        for map in self.maps.iter() {
+            if let Some(dst) = map.map_number_reverse(num) {
+                return dst;
+            }
+        }
+        num
+    }
 }
 
 #[derive(Debug)]
@@ -85,6 +132,13 @@ impl Map {
     fn map_number(&self, num: i64) -> Option<i64> {
         if num >= self.src && num <= self.src + self.len {
             return Some(num + self.dest - self.src);
+        }
+        None
+    }
+
+    fn map_number_reverse(&self, num: i64) -> Option<i64> {
+        if num >= self.dest && num <= self.dest + self.len {
+            return Some(num + self.src - self.dest);
         }
         None
     }
