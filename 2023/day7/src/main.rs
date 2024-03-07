@@ -1,12 +1,17 @@
-use std::{env, fs, ops::Index, str::FromStr};
+use std::{cmp::Ordering, env, fs, ops::Index, str::FromStr};
 
 fn main() {
     let fname = env::args().nth(1).unwrap();
     let contents = fs::read_to_string(fname).unwrap();
-    let hands : Vec<_> = contents.lines().map(|l| Hand::from_str(l).unwrap()).collect();
-    for h in hands {
-        dbg!(h.handtype());
+    let mut hands : Vec<_> = contents.lines().map(|l| Hand::from_str(l).unwrap()).collect();
+    hands.sort();
+    let mut result = 0;
+    for (i, hand) in hands.iter().enumerate() {
+        let rank = i + 1;
+        println!("{} * {}", hand.bid, rank);
+        result += rank * hand.bid as usize;
     }
+    dbg!(result);
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -31,7 +36,14 @@ impl FromStr for Hand {
 
 impl Ord for Hand {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        todo!()
+        let self_ht = self.handtype();
+        let other_ht = other.handtype();
+        self_ht.cmp(&other_ht)
+            .then(self.cards[0].cmp(&other.cards[0]))
+            .then(self.cards[1].cmp(&other.cards[1]))
+            .then(self.cards[2].cmp(&other.cards[2]))
+            .then(self.cards[3].cmp(&other.cards[3]))
+            .then(self.cards[4].cmp(&other.cards[4]))
     }
 }
 
@@ -41,15 +53,15 @@ impl PartialOrd for Hand {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
-    FiveOfAKind,
-    FourOfAKind,
-    FullHouse,
-    ThreeOfAKind,
-    TwoPair,
+    HighCard,
     OnePair,
-    HighCard
+    TwoPair,
+    ThreeOfAKind,
+    FullHouse,
+    FourOfAKind,
+    FiveOfAKind,
 }
 
 impl Hand {
