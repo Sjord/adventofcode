@@ -92,7 +92,7 @@ impl Hand {
 
     fn group_cards(&self) -> Vec<usize> {
         let mut result = Vec::new();
-        let possible_cards = b"23456789TJQKA";
+        let possible_cards = b"23456789TQKA";
         for search in possible_cards {
             let found = self.cards.iter().filter(|c| c.card == *search).count();
             if found != 0 {
@@ -100,6 +100,16 @@ impl Hand {
             }
         }
         result.sort();
+
+        // Use jokers to increase highest group
+        let jokers = self.cards.iter().filter(|c| c.card == b'J').count();
+        if !result.is_empty() {
+            let last_index = result.len() - 1;
+            result[last_index] += jokers;
+        } else {
+            result.push(jokers);
+        }
+
         result
     }
 }
@@ -111,7 +121,7 @@ struct Card {
 
 impl Ord for Card {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let order = b"23456789TJQKA";
+        let order = b"J23456789TQKA";
         let self_index = order.iter().position(|c| *c == self.card).unwrap();
         let other_index = order.iter().position(|c| *c == other.card).unwrap();
         self_index.cmp(&other_index)
