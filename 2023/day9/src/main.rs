@@ -19,8 +19,8 @@ fn predict(sequence: Vec<i64>) -> i64 {
         0
     } else {
         let differences = derive(&sequence);
-        let next = predict(differences);
-        sequence.last().unwrap() + next
+        let prev = predict(differences);
+        sequence.first().unwrap() - prev
     }
 }
 
