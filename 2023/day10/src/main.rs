@@ -6,8 +6,8 @@ fn main() {
     let pipes = contents.iter().map(|c| Pipe { char: *c }).collect();
     let width = 1 + contents.iter().position(|c| *c == b'\n').unwrap();
     let grid = Grid { pipes, width };
-    let steps = grid.walk();
-    dbg!((steps + 1) / 2);
+    let enclosed = grid.walk();
+    dbg!(enclosed);
 }
 
 #[derive(Debug)]
@@ -26,11 +26,15 @@ impl Grid {
 
     fn walk(&self) -> usize {
         let mut step_count = 0;
+        let mut surface: i64 = 0;
         let mut current = self.find_start();
         let mut out_direction = self.start_direction(&current);
 
         loop {
-            current = current.step(out_direction);
+            let next = current.step(out_direction);
+            surface += (current.x * next.y) as i64 - (current.y * next.x) as i64;
+
+            current = next;
             let pipe = self.get(&current);
 
             if self.get(&current).is_start() {
@@ -42,7 +46,10 @@ impl Grid {
             out_direction = pipe.traverse(in_direction);
             step_count += 1;
         }
-        step_count
+        surface = surface / 2;
+        dbg!(surface);
+        dbg!(step_count);
+        (surface - step_count / 2) as usize
     }
 
     fn start_direction(&self, start: &Coordinate) -> Direction {
