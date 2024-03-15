@@ -42,6 +42,7 @@ struct Universe {
 
 impl Universe {
     fn expand(&self) -> Universe {
+        let expand_ratio = 1000000;
         let width = 1 + self.galaxies.iter().map(|c| c.x).max().unwrap();
         let height = 1 + self.galaxies.iter().map(|c| c.y).max().unwrap();
 
@@ -50,8 +51,8 @@ impl Universe {
         
         let galaxies = self.galaxies.iter().map(|c| {
             Coordinate {
-                x: c.x + empty_cols.iter().filter(|x| **x < c.x).count(),
-                y: c.y + empty_rows.iter().filter(|y| **y < c.y).count(),
+                x: c.x + empty_cols.iter().filter(|x| **x < c.x).count() * (expand_ratio - 1),
+                y: c.y + empty_rows.iter().filter(|y| **y < c.y).count() * (expand_ratio - 1),
             }
         }).collect();
         Universe { galaxies }
